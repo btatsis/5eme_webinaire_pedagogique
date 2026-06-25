@@ -103,6 +103,15 @@ cd ..
  
 ## Setting Up and Running a Generative Design Run
  
-Step-by-step instructions for configuring and launching a REINVENT4 generative run are available in the accompanying tutorial page.
+A visual interface to setup the input file (.yaml) for the REINVENT run can be found in the accompanying page.
  
-> 🔗 **[Open the Tutorial →](#)**  *(link to be added)*
+> 🔗 **[Web-app for compiling reward function→](https://github.com/btatsis/5eme_webinaire_pedagogique/blob/main/reinvent-mpo-editor.html)**  *(reinvent-mpo-editor.html)*
+
+## Analysing the results from the REINVENT run
+
+![NLL loss curve](figures/NLL_plot.png)
+*Figure 1: NLL training curve for the REINVENT4 prior model.*
+
+A web app that can help us select compounds based on a multiobjective optimisation approach (please see article https://doi.org/10.1021/acs.jcim.6c00421)
+
+> 🔗 **[Web-app for selecting compounds based on a multiobjective optimisation method→](https://github.com/btatsis/5eme_webinaire_pedagogique/blob/main/reinvent-pareto-selector.html)**  *(reinvent-pareto-selector.html)*
