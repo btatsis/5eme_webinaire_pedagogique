@@ -1,0 +1,36 @@
+# maize global configuration file example
+
+# Where to save temporary files and all workflow directories
+scratch = "./maize-scratch"
+
+# Additional packages to load
+packages = [
+    "maize.steps.mai",
+    "maize.graphs.mai",
+	
+]
+
+[gnina]
+#python = "/home/ubuntu/miniconda3/envs/maize/bin/python"
+commands.gnina = "/usr/local/bin/gnina"
+
+#[vina]
+#python = "/Users/billtatsis/miniconda3/envs/maize/bin/python"
+#commands.vina = "/opt/vina/bin/vina"
+
+#[roshambo2similarity]
+#python = "/home/ubuntu/miniconda3/envs/roshambo2/bin/python"
+
+#[gypsum]
+#scripts.gypsum.interpreter = "/Users/billtatsis/miniconda3/envs/gypsum/bin/python"
+#scripts.gypsum.location = "/Users/billtatsis/pr0jects/C0d3_Doj0/mAiZe/CBI/gypsum_dl/run_gypsum_dl.py"
+
+# Modules to load
+#modules = ["program_module/1.0"]
+
+# Scripts that require a specific interpreter
+#scripts.program.interpreter = "path/to/python"
+#scripts.program.location = "path/to/program/or/folder"
+
+# Default parameter settings for this node
+#parameters.value = 42
