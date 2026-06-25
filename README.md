@@ -1,11 +1,9 @@
-# 5eme_webinaire_pedagogique
-
-# Open-Source Generative AI Tools in Chemistry
+# 5eme_webinaire_pedagogique on Open-Source Generative AI Tools in Chemistry
  
-This README accompanies the **5th Pedagogical Webinar** and guides participants through the installation and setup of REINVENT4, an open-source AI-driven generative molecule design framework.
+This README accompanies the **5th Pedagogical Webinar** and guides participants through the installation and setup of i) REINVENT4, an open-source AI-driven generative molecule design framework and ii) flowr.root, a flow-matching foundation model for structure-aware 3D ligand generation and affinity prediction.
  
-> **Reference:** Loeffler, J.R. et al. *REINVENT 4: Modern AI-driven generative molecule design.* J Cheminform 16, 20 (2024). [https://doi.org/10.1186/s13321-024-00812-5](https://link.springer.com/article/10.1186/s13321-024-00812-5)
- 
+> **References:** Loeffler, J.R. et al. *REINVENT 4: Modern AI-driven generative molecule design.* J Cheminform 16, 20 (2024). [https://doi.org/10.1186/s13321-024-00812-5](https://link.springer.com/article/10.1186/s13321-024-00812-5)
+FLOWR.root: A flow matching based foundation model for joint multi-purpose structure-aware 3D ligand generation and affinity prediction (https://arxiv.org/abs/2510.02578) 
 ---
  
 ## Contents
