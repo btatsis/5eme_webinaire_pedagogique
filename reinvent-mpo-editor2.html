@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REINVENT MPO Editor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            /* Anthropic palette: Ivory / Slate / Clay + accent family */
+            --bg: #faf9f5;          /* Ivory Light */
+            --surface: #fffefb;     /* warm white card surface */
+            --surface2: #f0eee6;    /* Oat */
+            --text: #141413;        /* Slate Dark */
+            --text2: #5c5b54;       /* warm secondary text */
+            --text3: #b0aea5;       /* Mid Gray */
+            --border: #ddd8cc;      /* warm hairline */
+            --accent: #d97757;      /* Clay */
+            --accent-bg: #f7ebe4;   /* clay tint */
+            --danger: #b3492d;      /* terracotta */
+            --danger-bg: #f5e7e1;
+            --success: #5f7344;     /* Olive (text-weight) */
+            --success-bg: #ebefe2;
+            --purple: #8a5a7a;      /* Fig */
+            --purple-bg: #f2e9ef;
+            --teal: #4a7a86;        /* Sky (text-weight) */
+            --teal-bg: #e6eef1;
+            --amber: #b5662e;       /* burnt clay */
+            --amber-bg: #f6ebe0;
+
+            /* Bootstrap 5.3 token overrides so utility classes adopt the brand */
+            --bs-body-bg: #faf9f5;
+            --bs-body-color: #141413;
+            --bs-secondary-color: #5c5b54;
+            --bs-light-rgb: 240, 238, 230;   /* #f0eee6 Oat for .bg-light */
+            --bs-dark-rgb: 20, 20, 19;       /* #141413 Slate for .bg-dark */
+            --bs-danger-rgb: 179, 73, 45;    /* #b3492d */
+            --bs-success-rgb: 95, 115, 68;   /* #5f7344 */
+            --bs-border-color: #ddd8cc;
+            --bs-primary: #d97757;
+            --bs-primary-rgb: 217, 119, 87;
+            --bs-link-color: #c4633f;
+            --bs-link-hover-color: #b35636;
+
+            --radius: 10px;
+            --radius-lg: 14px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --mono: 'JetBrains Mono', monospace;
+            --sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #141413;       /* Slate Dark */
+                --surface: #1e1d1b;
+                --surface2: #2a2825;
+                --text: #faf9f5;     /* Ivory */
+                --text2: #b0aea5;    /* Mid Gray */
+                --text3: #7c7a70;
+                --border: #3a382f;
+                --accent: #e08a6b;   /* lifted Clay for contrast */
+                --accent-bg: #3a2a22;
+                --bs-body-bg: #141413;
+                --bs-body-color: #faf9f5;
+                --bs-dark-rgb: 20, 20, 19;
+            }
+        }
+
+        /* Bootstrap component recolor to the Anthropic palette */
+        .btn-primary {
+            --bs-btn-bg: var(--accent); --bs-btn-border-color: var(--accent);
+            --bs-btn-hover-bg: #c4633f; --bs-btn-hover-border-color: #c4633f;
+            --bs-btn-active-bg: #b35636; --bs-btn-active-border-color: #b35636;
+            --bs-btn-disabled-bg: var(--accent); --bs-btn-disabled-border-color: var(--accent);
+            --bs-btn-color: #fff; --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff; --bs-btn-disabled-color: #fff;
+        }
+        .btn-outline-primary {
+            --bs-btn-color: #c4633f; --bs-btn-border-color: var(--accent);
+            --bs-btn-hover-bg: var(--accent); --bs-btn-hover-border-color: var(--accent); --bs-btn-hover-color: #fff;
+            --bs-btn-active-bg: var(--accent); --bs-btn-active-border-color: var(--accent); --bs-btn-active-color: #fff;
+        }
+        .btn-secondary {
+            --bs-btn-bg: var(--text); --bs-btn-border-color: var(--text);
+            --bs-btn-hover-bg: #2a2825; --bs-btn-hover-border-color: #2a2825;
+            --bs-btn-active-bg: #000; --bs-btn-active-border-color: #000;
+            --bs-btn-disabled-bg: var(--text); --bs-btn-disabled-border-color: var(--text);
+            --bs-btn-color: #faf9f5; --bs-btn-hover-color: #fff; --bs-btn-active-color: #fff; --bs-btn-disabled-color: #faf9f5;
+        }
+        .btn-outline-secondary {
+            --bs-btn-color: var(--text2); --bs-btn-border-color: var(--border);
+            --bs-btn-hover-bg: var(--surface2); --bs-btn-hover-color: var(--text); --bs-btn-hover-border-color: var(--border);
+            --bs-btn-active-bg: var(--surface2); --bs-btn-active-color: var(--text); --bs-btn-active-border-color: var(--border);
+        }
+
+        body { font-family: var(--sans); background: var(--bg); color: var(--text); line-height: 1.5; }
+        #navigation-bar { min-height: 56px; margin-bottom: 2rem; }
+        .container { margin-top: 2rem; max-width: 1200px; }
+        .card { border: none; border-radius: 0.5rem; box-shadow: var(--shadow); }
+        h1, h2, h3 { color: var(--text); margin-bottom: 1.5rem; }
+
+        .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: 48px 32px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface); }
+        .upload-zone:hover { border-color: var(--accent); background: var(--accent-bg); }
+        .upload-zone .icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+        .upload-zone input { display: none; }
+        .upload-zone .label { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+        .upload-zone .sublabel { font-size: 13px; color: var(--text3); }
+
+        .components-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+        .comp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+        .comp-card-head { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .comp-name { font-size: 14px; font-weight: 600; color: var(--text); }
+        .comp-type-badge { font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; text-transform: capitalize; }
+        
+        .badge-activity { background: var(--purple-bg); color: var(--purple); }
+        .badge-physichem { background: var(--teal-bg); color: var(--teal); }
+        .badge-filter { background: var(--danger-bg); color: var(--danger); }
+        .badge-complexity { background: var(--amber-bg); color: var(--amber); }
+        .badge-druglikeness { background: var(--success-bg); color: var(--success); }
+        .badge-other { background: var(--surface2); color: var(--text2); }
+
+        .comp-card-chart { height: 240px; padding: 10px 12px 0; position: relative; }
+        .comp-card-body { padding: 10px 16px 14px; }
+        .field-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end; }
+        .field { flex: 1; }
+        .field label { display: block; font-size: 11px; color: var(--text3); margin-bottom: 4px; text-transform: uppercase; }
+        .field input, .field select { width: 100%; font-family: var(--mono); font-size: 12px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); }
+
+        .comp-card-actions { padding: 0 16px 12px; display: flex; justify-content: flex-end; }
+        .btn-icon { background: none; border: none; cursor: pointer; padding: 4px; color: var(--text3); transition: color 0.15s; }
+        .btn-icon:hover { color: var(--danger); }
+        pre { font-family: var(--mono); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <div class="mb-4" id="navigation-bar"></div>
+
+    <div class="container">
+        <h1 class="text-center">REINVENT MPO Editor</h1>
+
+        <div class="card mb-4" id="uploadCard">
+            <div class="card-body text-center bg-white rounded">
+                <div class="upload-zone" id="uploadZone">
+                    <input type="file" id="fileInput" accept=".toml,.txt">
+                    <div class="icon">&#128196;</div>
+                    <div class="label">Drop a TOML file here or click to browse</div>
+                    <div class="sublabel">REINVENT staged-learning TOML format</div>
+                </div>
+
+                <div class="d-flex align-items-center my-3 text-muted">
+                    <hr class="flex-grow-1"><span class="px-3 small text-uppercase">or paste a config</span><hr class="flex-grow-1">
+                </div>
+
+                <textarea id="pasteInput" class="form-control" style="font-family: var(--mono); font-size: 13px; min-height: 160px; text-align: left;"
+                    placeholder='Paste a REINVENT staged-learning TOML config here, e.g.&#10;&#10;run_type = "staged_learning"&#10;[[stage]]&#10;[stage.scoring]&#10;type = "geometric_mean"&#10;[[stage.scoring.component]]&#10;[stage.scoring.component.QED]&#10;[[stage.scoring.component.QED.endpoint]]&#10;name = "QED"&#10;weight = 1'></textarea>
+                <div id="pasteError" class="text-danger small mt-2 text-start" style="display:none;"></div>
+                <button class="btn btn-primary mt-3 fw-bold" id="loadPasteBtn">Load pasted config</button>
+            </div>
+        </div>
+
+        <div id="editorArea" style="display:none;">
+            <div class="card mb-4 border-0">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 text-dark">Run & Learning Parameters</h5>
+                    <span class="badge bg-secondary">Global</span>
+                </div>
+                <div class="card-body bg-white border border-top-0 rounded-bottom">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted text-uppercase">Prior File</label>
+                            <input type="text" class="form-control form-control-sm" id="priorFile" onchange="updateGlobal('prior_file', this.value)">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted text-uppercase">Agent File</label>
+                            <input type="text" class="form-control form-control-sm" id="agentFile" onchange="updateGlobal('agent_file', this.value)">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-muted text-uppercase">Smiles File</label>
+                            <input type="text" class="form-control form-control-sm" id="smilesFile" onchange="updateGlobal('smiles_file', this.value)">
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted text-uppercase">Batch Size</label>
+                            <input type="number" class="form-control form-control-sm" id="batchSize" onchange="updateGlobal('batch_size', parseInt(this.value))">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted text-uppercase">Sigma (RL)</label>
+                            <input type="number" class="form-control form-control-sm" id="sigma" onchange="updateLearning('sigma', parseFloat(this.value))">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small text-muted text-uppercase">Learning Rate</label>
+                            <input type="number" class="form-control form-control-sm" id="learningRate" step="0.0001" onchange="updateLearning('rate', parseFloat(this.value))">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="uniqueSeqs" onchange="updateGlobal('unique_sequences', this.checked)">
+                                <label class="form-check-label small text-dark" for="uniqueSeqs">Unique Seqs</label>
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" id="randomizeSmiles" onchange="updateGlobal('randomize_smiles', this.checked)">
+                                <label class="form-check-label small text-dark" for="randomizeSmiles">Randomize Smiles</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center mb-3 gap-3">
+                <div class="btn-group" role="group" id="stageTabs"></div>
+                <button class="btn btn-outline-success btn-sm fw-bold" onclick="addStage()">+ New Stage</button>
+            </div>
+
+            <div class="card mb-4 border-primary">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0" id="currentStageTitle">Stage Configuration</h5>
+                </div>
+                <div class="card-body bg-white rounded-bottom">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Aggregation</label>
+                            <select class="form-select form-select-sm" id="aggType" onchange="updateStageMeta('aggType', this.value)">
+                                <option value="geometric_mean">geometric_mean</option>
+                                <option value="arithmetic_mean">arithmetic_mean</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Max Score</label>
+                            <input type="number" class="form-control form-control-sm" id="maxScore" step="0.1" min="0" max="1" onchange="updateStageMeta('max_score', parseFloat(this.value))">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Min Steps</label>
+                            <input type="number" class="form-control form-control-sm" id="minSteps" step="1" min="1" onchange="updateStageMeta('min_steps', parseInt(this.value))">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small text-muted text-uppercase fw-bold">Max Steps</label>
+                            <input type="number" class="form-control form-control-sm" id="maxSteps" step="1" min="1" onchange="updateStageMeta('max_steps', parseInt(this.value))">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="btn-group">
+                    <button class="btn btn-outline-dark btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addComponentModal">+ Add Component</button>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-sm fw-bold" onclick="exportToml()">&#11015; Export TOML</button>
+                    <button class="btn btn-outline-primary btn-sm fw-bold" onclick="previewToml()">&#128065; Preview</button>
+                </div>
+            </div>
+
+            <div class="components-grid mb-4" id="compGrid"></div>
+
+            <div class="card toml-output border-0" id="tomlOutput" style="display:none;">
+                <div class="card-header d-flex justify-content-between align-items-center bg-light border border-bottom-0 rounded-top">
+                    <span class="fw-bold text-dark">TOML config <span class="text-muted fw-normal small">&mdash; editable</span></span>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-primary fw-bold" onclick="applyTomlEdits()">Apply to editor</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="copyToml()">Copy to Clipboard</button>
+                    </div>
+                </div>
+                <div class="card-body p-0 border rounded-bottom">
+                    <textarea id="tomlPre" class="m-0 p-3 bg-dark text-light rounded-bottom border-0 w-100" spellcheck="false"
+                        style="max-height: 400px; min-height: 240px; overflow-y: auto; text-align: left; font-family: var(--mono); font-size: 13px; resize: vertical; outline: none;"></textarea>
+                </div>
+                <div id="applyError" class="text-danger small mt-2 px-1" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="text-center py-5 text-muted" id="emptyState">
+            <p>Please upload a scoring configuration file to begin editing.</p>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addComponentModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold text-dark">Add Scoring Component</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label small text-muted text-uppercase">Select Component Function</label>
+            <select class="form-select" id="newComponentSelect"></select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="confirmAddComponent()">Add Component</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+        import * as toml from 'https://cdn.jsdelivr.net/npm/smol-toml@1.6.1/+esm';
+
+        // ── Available Components Master List ──
+        const availableComponents = {
+            "Physicochemical Properties": [
+                { id: "SlogP", name: "SlogP (Crippen)" },
+                { id: "MolecularWeight", name: "Molecular Weight" },
+                { id: "TPSA", name: "TPSA" },
+                { id: "GraphLength", name: "Graph Length" },
+                { id: "NumAtomStereoCenters", name: "Stereo Centers" },
+                { id: "HBondAcceptors", name: "H-Bond Acceptors" },
+                { id: "HBondDonors", name: "H-Bond Donors" },
+                { id: "NumRotBond", name: "Rotatable Bonds" },
+                { id: "Csp3", name: "Fraction sp3 Carbons" },
+                { id: "numsp", name: "sp Hybridized Atoms" },
+                { id: "numsp2", name: "sp2 Hybridized Atoms" },
+                { id: "numsp3", name: "sp3 Hybridized Atoms" },
+                { id: "NumHeavyAtoms", name: "Heavy Atoms" },
+                { id: "NumHeteroAtoms", name: "Hetero Atoms" },
+                { id: "NumRings", name: "Total Rings" },
+                { id: "NumAromaticRings", name: "Aromatic Rings" },
+                { id: "NumAliphaticRings", name: "Aliphatic Rings" },
+                { id: "LargestRingSize", name: "Largest Ring Size" },
+                { id: "PMI", name: "Principal Moment of Inertia", params: { property: "npr1" } },
+                { id: "MolVolume", name: "Molecular Volume" }
+            ],
+            "Drug-likeness & Synthesizability": [
+                { id: "QED", name: "QED Score" },
+                { id: "SAScore", name: "SA Score (Synthesizability)" },
+                { id: "CAZP", name: "CAZP (AiZynthFinder)" },
+                { id: "ReactionFilter", name: "Reaction Filter", params: { type: "", reaction_smarts: "" } }
+            ],
+            "Similarity & Cheminformatics": [
+                { id: "CustomAlerts", name: "Custom Alerts (SMARTS)", params: { smarts: [] } },
+                { id: "GroupCount", name: "Group Count", params: { smarts: "" } },
+                { id: "MatchingSubstructure", name: "Matching Substructure", params: { smarts: "", use_chirality: false } },
+                { id: "TanimotoSimilarity", name: "Tanimoto Similarity", params: { smiles: [], radius: 2, use_counts: true, use_features: false } },
+                { id: "MMP", name: "Matched Molecular Pair", params: { reference_smiles: [], num_of_cuts: 1, max_variable_heavies: 40, max_variable_ratio: 0.33 } },
+                { id: "RingPrecedence", name: "Ring Precedence", params: { database_file: "", _nll_method: "max" } }
+            ],
+            "Physics & Structural Docking": [
+                { id: "MAIZE", name: "MAIZE Workflow Engine", params: { executable: "maize", workflow: "", config: "", debug: false, keep: false, log: "" } }
+            ],
+            "QSAR/QSPR Models": [
+                { id: "ChemProp", name: "ChemProp D-MPNN", params: { checkpoint_dir: "", rdkit_2d_normalized: false } },
+                { id: "Qptuna", name: "Qptuna Model", params: { model_file: "" } }
+            ],
+            "Generic Extensions": [
+                { id: "ExternalProcess", name: "External Process Executable", params: { executable: "", args: "" } },
+                { id: "REST", name: "REST API Interface", params: { server_url: "", server_port: "", server_endpoint: "", predictor_id: "", predictor_version: "", header: "" } }
+            ]
+        };
+
+        // ── App state ──
+        let allStages = [];
+        let globalParams = {};
+        let learningStrategy = {};
+        let currentStageIndex = 0;
+        let charts = {};
+
+        // ── Extraction Logic ──
+        function extractAllData(parsed) {
+            const stages = [];
+            const rawStages = Array.isArray(parsed.stage) ? parsed.stage : [parsed.stage || {}];
+
+            rawStages.forEach((stage, sIdx) => {
+                const components = [];
+                const scoring = stage.scoring || {};
+                const componentList = scoring.component || [];
+
+                if (Array.isArray(componentList)) {
+                    componentList.forEach(compWrapper => {
+                        const typeNames = Object.keys(compWrapper);
+                        typeNames.forEach(typeName => {
+                            const c = compWrapper[typeName];
+                            const endpoints = Array.isArray(c.endpoint) ? c.endpoint : [c.endpoint || {}];
+
+                            endpoints.forEach(ep => {
+                                components.push({
+                                    componentType: typeName,
+                                    name: ep.name || c.name || typeName,
+                                    weight: ep.weight !== undefined ? ep.weight : null,
+                                    transform: ep.transform ? { ...ep.transform } : {},
+                                    params: ep.params ? { ...ep.params } : {},
+                                    originalName: ep.name || c.name || typeName
+                                });
+                            });
+                        });
+                    });
+                }
+
+                stages.push({
+                    meta: {
+                        chkpt_file: stage.chkpt_file || `stage${sIdx+1}.chkpt`,
+                        termination: stage.termination || 'simple',
+                        max_score: stage.max_score !== undefined ? stage.max_score : 0.7,
+                        min_steps: stage.min_steps !== undefined ? stage.min_steps : 25,
+                        max_steps: stage.max_steps !== undefined ? stage.max_steps : 50,
+                        aggType: scoring.type || 'geometric_mean'
+                    },
+                    components: components
+                });
+            });
+
+            return { stages, params: parsed.parameters || {}, learning: parsed.learning_strategy || {} };
+        }
+
+        // ── TOML GENERATOR ──
+        function generateToml() {
+            let out = 'run_type = "staged_learning"\n\n';
+            
+            out += '[parameters]\n';
+            if (globalParams.prior_file) out += `prior_file = "${globalParams.prior_file}"\n`;
+            if (globalParams.agent_file) out += `agent_file = "${globalParams.agent_file}"\n`;
+            if (globalParams.smiles_file) out += `smiles_file = "${globalParams.smiles_file}"\n`;
+            if (globalParams.batch_size !== undefined) out += `batch_size = ${globalParams.batch_size}\n`;
+            if (globalParams.unique_sequences !== undefined) out += `unique_sequences = ${globalParams.unique_sequences}\n`;
+            if (globalParams.randomize_smiles !== undefined) out += `randomize_smiles = ${globalParams.randomize_smiles}\n`;
+            
+            out += '\n[learning_strategy]\n';
+            out += `type = "dap"\n`; 
+            if (learningStrategy.sigma !== undefined) out += `sigma = ${learningStrategy.sigma}\n`;
+            if (learningStrategy.rate !== undefined) out += `rate = ${learningStrategy.rate}\n`;
+
+            allStages.forEach((stage, sIdx) => {
+                out += `\n### Stage ${sIdx + 1}\n`;
+                out += `[[stage]]\n`;
+                out += `chkpt_file = "${stage.meta.chkpt_file}"\n`;
+                out += `termination = "${stage.meta.termination}"\n`;
+                out += `max_score = ${stage.meta.max_score}\n`;
+                out += `min_steps = ${stage.meta.min_steps}\n`;
+                out += `max_steps = ${stage.meta.max_steps}\n`;
+
+                out += `\n[stage.scoring]\n`;
+                out += `type = "${stage.meta.aggType}"\n`;
+
+                stage.components.forEach(comp => {
+                    out += `\n[[stage.scoring.component]]\n`;
+                    out += `[stage.scoring.component.${comp.componentType}]\n`;
+                    out += `[[stage.scoring.component.${comp.componentType}.endpoint]]\n`;
+                    out += `name = "${comp.name}"\n`;
+                    if (comp.weight !== null && comp.weight !== '') {
+                        out += `weight = ${comp.weight}\n`;
+                    }
+
+                    if (comp.params && Object.keys(comp.params).length > 0) {
+                        for (const [pk, pv] of Object.entries(comp.params)) {
+                            if (Array.isArray(pv)) {
+                                out += `params.${pk} = [\n`;
+                                pv.forEach((item, i) => {
+                                    out += `    "${item}"${i < pv.length - 1 ? ',' : ''}\n`;
+                                });
+                                out += `]\n`;
+                            } else if (typeof pv === 'string') {
+                                out += `params.${pk} = "${pv}"\n`;
+                            } else {
+                                out += `params.${pk} = ${pv}\n`;
+                            }
+                        }
+                    }
+
+                    const t = comp.transform;
+                    if (t && t.type && t.type !== "") {
+                        out += `\ntransform.type = "${t.type}"\n`;
+                        if (['sigmoid', 'reverse_sigmoid', 'double_sigmoid', 'step', 'left_step', 'right_step'].includes(t.type)) {
+                            if (t.high !== undefined && t.type !== 'left_step') out += `transform.high = ${t.high}\n`;
+                            if (t.low !== undefined && t.type !== 'right_step') out += `transform.low = ${t.low}\n`;
+                        }
+                        if (['sigmoid', 'reverse_sigmoid'].includes(t.type) && t.k !== undefined) {
+                            out += `transform.k = ${t.k}\n`;
+                        }
+                        if (t.type === 'double_sigmoid') {
+                            if (t.coef_div !== undefined) out += `transform.coef_div = ${t.coef_div}\n`;
+                            if (t.coef_si !== undefined) out += `transform.coef_si = ${t.coef_si}\n`;
+                            if (t.coef_se !== undefined) out += `transform.coef_se = ${t.coef_se}\n`;
+                        }
+                    }
+                });
+            });
+
+            return out;
+        }
+
+        // ── UI Rendering ──
+        function switchStage(idx) { currentStageIndex = idx; render(); }
+
+        function renderStageTabs() {
+            const container = document.getElementById('stageTabs');
+            container.innerHTML = '';
+            allStages.forEach((_, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `btn btn-sm ${idx === currentStageIndex ? 'btn-primary' : 'btn-outline-primary'} fw-bold`;
+                btn.innerText = `Stage ${idx + 1}`;
+                btn.onclick = () => switchStage(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function render() {
+            renderStageTabs();
+            const stage = allStages[currentStageIndex];
+            if (!stage) return;
+
+            document.getElementById('currentStageTitle').innerText = `Stage ${currentStageIndex + 1} Configuration`;
+            document.getElementById('maxScore').value = stage.meta.max_score;
+            document.getElementById('minSteps').value = stage.meta.min_steps;
+            document.getElementById('maxSteps').value = stage.meta.max_steps;
+            document.getElementById('aggType').value = stage.meta.aggType;
+
+            const grid = document.getElementById('compGrid');
+            grid.innerHTML = '';
+            Object.values(charts).forEach(c => c.destroy());
+            charts = {};
+
+            stage.components.forEach((comp, idx) => {
+                const cat = guessCategory(comp);
+                const card = document.createElement('div');
+                card.className = 'comp-card';
+                card.innerHTML = `
+                    <div class="comp-card-head">
+                        <span class="comp-name" title="${comp.name}">${comp.name}</span>
+                        <span class="comp-type-badge badge-${cat}">${cat}</span>
+                    </div>
+                    <div class="comp-card-chart"><canvas id="chart-${idx}"></canvas></div>
+                    <div class="comp-card-body">
+                        <div class="field-row">
+                            <div class="field"><label>Type</label><input value="${comp.componentType}" onchange="updateComp(${idx},'componentType',this.value)" disabled></div>
+                            <div class="field"><label>Weight</label><input type="number" step="0.1" value="${comp.weight ?? ''}" placeholder="none (filter)" onchange="updateComp(${idx},'weight',this.value===''?null:parseFloat(this.value))"></div>
+                        </div>
+                        <div class="field-row">
+                            <div class="field"><label>Transform</label>
+                                <select onchange="updateTransformType(${idx},this.value)">
+                                    <option value="" ${!comp.transform.type ? 'selected' : ''}>none</option>
+                                    <option value="sigmoid" ${comp.transform.type === 'sigmoid' ? 'selected' : ''}>sigmoid</option>
+                                    <option value="reverse_sigmoid" ${comp.transform.type === 'reverse_sigmoid' ? 'selected' : ''}>reverse_sigmoid</option>
+                                    <option value="double_sigmoid" ${comp.transform.type === 'double_sigmoid' ? 'selected' : ''}>double_sigmoid</option>
+                                    <option value="step" ${comp.transform.type === 'step' ? 'selected' : ''}>step</option>
+                                    <option value="left_step" ${comp.transform.type === 'left_step' ? 'selected' : ''}>left_step</option>
+                                    <option value="right_step" ${comp.transform.type === 'right_step' ? 'selected' : ''}>right_step</option>
+                                    <option value="value_mapping" ${comp.transform.type === 'value_mapping' ? 'selected' : ''}>value_mapping</option>
+                                </select>
+                            </div>
+                        </div>
+                        ${renderTransformFields(comp, idx)}
+                    </div>
+                    <div class="comp-card-actions">
+                        <button class="btn-icon" onclick="removeComp(${idx})"><i data-lucide="trash-2" style="width:16px;"></i></button>
+                    </div>
+                `;
+                grid.appendChild(card);
+                renderChart(idx, comp, cat);
+            });
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // ── CORRECTED Math & Visualization ──
+        function sigmoid(x, low, high, k) { 
+            return 1 / (1 + Math.pow(10, -k * (x - (low + high) / 2))); 
+        }
+        function revSigmoid(x, low, high, k) { 
+            return 1 / (1 + Math.pow(10, k * (x - (low + high) / 2))); 
+        }
+        function dblSigmoid(x, low, high, cd, csi, cse) {
+            const m = (low + high) / 2;
+            if (x <= m) return 1 / (1 + Math.pow(10, -csi * (x - low) / cd));
+            return 1 / (1 + Math.pow(10, cse * (x - high) / cd));
+        }
+        function stepFn(x, low, high) { return (x >= low && x <= high) ? 1 : 0; }
+        function leftStepFn(x, low) { return x <= low ? 1 : 0; }
+        function rightStepFn(x, high) { return x >= high ? 1 : 0; }
+
+        function getTransformFn(t) {
+            if (!t || !t.type) return null;
+            switch (t.type) {
+                case 'sigmoid': return x => sigmoid(x, t.low, t.high, t.k);
+                case 'reverse_sigmoid': return x => revSigmoid(x, t.low, t.high, t.k);
+                case 'double_sigmoid': return x => dblSigmoid(x, t.low, t.high, t.coef_div, t.coef_si, t.coef_se);
+                case 'step': return x => stepFn(x, t.low, t.high);
+                case 'left_step': return x => leftStepFn(x, t.low);
+                case 'right_step': return x => rightStepFn(x, t.high);
+                default: return null;
+            }
+        }
+
+        function renderTransformFields(comp, idx) {
+            const t = comp.transform;
+            if (!t.type || t.type === 'value_mapping') return '';
+            
+            if (t.type === 'sigmoid' || t.type === 'reverse_sigmoid') {
+                return `<div class="field-row">
+                    <div class="field"><label>Low</label><input type="number" step="any" value="${t.low ?? 0}" onchange="updateTransform(${idx},'low',parseFloat(this.value))"></div>
+                    <div class="field"><label>High</label><input type="number" step="any" value="${t.high ?? 10}" onchange="updateTransform(${idx},'high',parseFloat(this.value))"></div>
+                    <div class="field"><label>k</label><input type="number" step="0.1" value="${t.k ?? 0.5}" onchange="updateTransform(${idx},'k',parseFloat(this.value))"></div>
+                </div>`;
+            } else if (t.type === 'double_sigmoid') {
+                return `<div class="field-row">
+                    <div class="field"><label>Low</label><input type="number" step="any" value="${t.low ?? 0}" onchange="updateTransform(${idx},'low',parseFloat(this.value))"></div>
+                    <div class="field"><label>High</label><input type="number" step="any" value="${t.high ?? 10}" onchange="updateTransform(${idx},'high',parseFloat(this.value))"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field"><label>coef_div</label><input type="number" step="any" value="${t.coef_div ?? t.high ?? 10}" onchange="updateTransform(${idx},'coef_div',parseFloat(this.value))"></div>
+                    <div class="field"><label>coef_si</label><input type="number" step="any" value="${t.coef_si ?? 20}" onchange="updateTransform(${idx},'coef_si',parseFloat(this.value))"></div>
+                    <div class="field"><label>coef_se</label><input type="number" step="any" value="${t.coef_se ?? 20}" onchange="updateTransform(${idx},'coef_se',parseFloat(this.value))"></div>
+                </div>`;
+            } else if (t.type === 'step') {
+                 return `<div class="field-row">
+                    <div class="field"><label>Low</label><input type="number" step="any" value="${t.low ?? 0}" onchange="updateTransform(${idx},'low',parseFloat(this.value))"></div>
+                    <div class="field"><label>High</label><input type="number" step="any" value="${t.high ?? 10}" onchange="updateTransform(${idx},'high',parseFloat(this.value))"></div>
+                </div>`;
+            } else if (t.type === 'left_step') {
+                 return `<div class="field-row">
+                    <div class="field"><label>Low</label><input type="number" step="any" value="${t.low ?? 0}" onchange="updateTransform(${idx},'low',parseFloat(this.value))"></div>
+                </div>`;
+            } else if (t.type === 'right_step') {
+                 return `<div class="field-row">
+                    <div class="field"><label>High</label><input type="number" step="any" value="${t.high ?? 10}" onchange="updateTransform(${idx},'high',parseFloat(this.value))"></div>
+                </div>`;
+            }
+            return '';
+        }
+
+        // Updated Chart Logic with dynamic category colors
+        function renderChart(idx, comp, cat) {
+            const canvas = document.getElementById('chart-' + idx);
+            if (!canvas) return;
+            const fn = getTransformFn(comp.transform);
+            
+            const low = comp.transform.low ?? 0;
+            const high = comp.transform.high ?? 10;
+            const mid = (low + high) / 2;
+            
+            const range = (high - low === 0) ? 10 : Math.abs(high - low);
+            const start = low - (range * 0.3);
+            const end = high + (range * 0.3);
+            
+            const pts = [];
+            for (let i = 0; i <= 100; i++) {
+                const x = start + (i * (end - start) / 100);
+                pts.push({ x: Math.round(x*100)/100, y: fn ? Math.round(fn(x)*1000)/1000 : 1 });
+            }
+
+            // Map category to matching badge color
+            const colorMap = { 
+                activity: '#8a5a7a', 
+                druglikeness: '#5f7344', 
+                physichem: '#4a7a86', 
+                complexity: '#b5662e', 
+                filter: '#b3492d', 
+                other: '#5c5b54' 
+            };
+            const color = colorMap[cat] || '#d97757';
+
+            const boundsAnnotation = {
+                id: 'boundsAnnotation',
+                afterDraw: (chart) => {
+                    if (!fn || ['step', 'left_step', 'right_step', 'value_mapping'].includes(comp.transform.type)) return;
+                    
+                    const ctx = chart.ctx;
+                    const xAxis = chart.scales.x;
+                    const yAxis = chart.scales.y;
+                    const dark = matchMedia('(prefers-color-scheme:dark)').matches;
+                    
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    let pointsToAnnotate = [];
+
+                    if (comp.transform.type === 'double_sigmoid') {
+                        pointsToAnnotate = [
+                            { x: low, y: fn(low), label: 'Low' },
+                            { x: high, y: fn(high), label: 'High' }
+                        ];
+                    } else {
+                        pointsToAnnotate = [
+                            { x: low, y: fn(low), label: 'Low' },
+                            { x: mid, y: fn(mid), label: 'Mid' },
+                            { x: high, y: fn(high), label: 'High' }
+                        ];
+
+                        const midPt = pointsToAnnotate[1];
+                        const midPx = xAxis.getPixelForValue(midPt.x);
+                        ctx.beginPath();
+                        ctx.setLineDash([4, 4]);
+                        ctx.moveTo(midPx, yAxis.getPixelForValue(1.05));
+                        ctx.lineTo(midPx, yAxis.getPixelForValue(-0.05));
+                        ctx.strokeStyle = dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+
+                    pointsToAnnotate.forEach(pt => {
+                        const px = xAxis.getPixelForValue(pt.x);
+                        const py = yAxis.getPixelForValue(pt.y);
+
+                        ctx.beginPath();
+                        ctx.arc(px, py, 4.5, 0, 2 * Math.PI);
+                        ctx.fillStyle = color;
+                        ctx.fill();
+
+                        const valStr = pt.y.toFixed(3);
+                        const xStr = `x = ${pt.x}`;
+                        const isTop = pt.y >= 0.5;
+                        const mainY = isTop ? py - 18 : py + 12;
+                        const subY = isTop ? py - 6 : py + 24;
+
+                        const textWidth = ctx.measureText(`${pt.label}: ${valStr}`).width;
+                        ctx.fillStyle = dark ? 'rgba(30, 30, 28, 0.85)' : 'rgba(255, 255, 255, 0.85)';
+                        ctx.fillRect(px - textWidth/2 - 4, mainY - 6, textWidth + 8, 12);
+                        ctx.fillRect(px - 20, subY - 6, 40, 12);
+
+                        ctx.fillStyle = dark ? '#faf9f5' : '#141413';
+                        ctx.font = 'bold 10px "DM Sans", system-ui, sans-serif';
+                        ctx.fillText(`${pt.label}: ${valStr}`, px, mainY);
+                        
+                        ctx.font = '10px "DM Sans", system-ui, sans-serif';
+                        ctx.fillText(xStr, px, subY);
+                    });
+                    
+                    ctx.restore();
+                }
+            };
+
+            const dark = matchMedia('(prefers-color-scheme:dark)').matches;
+
+            charts[idx] = new Chart(canvas, {
+                type: 'line',
+                plugins: [boundsAnnotation],
+                data: {
+                    datasets: [
+                        {
+                            data: pts, 
+                            borderColor: color, 
+                            borderWidth: 2.5, 
+                            pointRadius: 0, 
+                            showLine: true,
+                            fill: true, 
+                            backgroundColor: dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                            tension: 0.15
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    animation: false,
+                    layout: { padding: { top: 25, bottom: 10, left: 10, right: 20 } },
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                    scales: {
+                        x: { 
+                            display: true, 
+                            type: 'linear', 
+                            title: { display: true, text: 'Raw Metric Value (x)', color: 'var(--text2)', font: {size: 10, weight: 'bold'} },
+                            ticks: { font: { size: 9 }, maxTicksLimit: 7 } 
+                        },
+                        y: { 
+                            display: true, 
+                            min: -0.05, 
+                            max: 1.15, 
+                            title: { display: true, text: 'Reward Score (y)', color: 'var(--text2)', font: {size: 10, weight: 'bold'} },
+                            ticks: { font: { size: 9 }, stepSize: 0.2 } 
+                        }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x' }
+                }
+            });
+        }
+
+        function guessCategory(comp) {
+            const n = (comp.name + ' ' + comp.componentType).toLowerCase();
+            if (n.includes('ec50') || n.includes('dock') || n.includes('affinity') || n.includes('maize')) return 'activity';
+            if (n.includes('qed')) return 'druglikeness';
+            if (n.includes('alert') || n.includes('filter') || n.includes('process')) return 'filter';
+            if (n.includes('sa ') || n.includes('sascore') || n.includes('stereo') || n.includes('rot')) return 'complexity';
+            if (n.includes('mw') || n.includes('logp') || n.includes('tpsa') || n.includes('hbond') || n.includes('weight')) return 'physichem';
+            return 'other';
+        }
+
+        // ── State Updaters Exposed to Global Scope ──
+        window.updateGlobal = (key, val) => { globalParams[key] = val; };
+        window.updateLearning = (key, val) => { learningStrategy[key] = val; };
+        window.updateStageMeta = (key, val) => { allStages[currentStageIndex].meta[key] = val; };
+        
+        window.updateComp = (idx, key, val) => {
+            allStages[currentStageIndex].components[idx][key] = val;
+            render();
+        };
+
+        window.updateTransformType = (idx, type) => {
+            const defaults = {
+                sigmoid: { type: 'sigmoid', low: 0, high: 10, k: 0.5 },
+                reverse_sigmoid: { type: 'reverse_sigmoid', low: 0, high: 10, k: 0.5 },
+                double_sigmoid: { type: 'double_sigmoid', low: 0, high: 10, coef_div: 10, coef_si: 10, coef_se: 10 },
+                step: { type: 'step', low: 0, high: 10 },
+                left_step: { type: 'left_step', low: 0 },
+                right_step: { type: 'right_step', high: 10 },
+                value_mapping: { type: 'value_mapping' }
+            };
+            allStages[currentStageIndex].components[idx].transform = type ? { ...defaults[type] } : {};
+            render();
+        };
+
+        window.updateTransform = (idx, key, val) => {
+            allStages[currentStageIndex].components[idx].transform[key] = val;
+            render();
+        };
+
+        window.removeComp = (idx) => { allStages[currentStageIndex].components.splice(idx, 1); render(); };
+        
+        window.confirmAddComponent = () => {
+            const select = document.getElementById('newComponentSelect');
+            const selectedOpt = select.options[select.selectedIndex];
+            const compId = selectedOpt.value;
+            const params = JSON.parse(selectedOpt.dataset.params || '{}');
+
+            allStages[currentStageIndex].components.push({
+                componentType: compId,
+                name: selectedOpt.text.split(' - ')[1] || compId, 
+                weight: 1,
+                transform: { type: 'sigmoid', low: 0, high: 10, k: 0.5 }, 
+                params: params,
+                originalName: compId
+            });
+            
+            const modalEl = document.getElementById('addComponentModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            modal.hide();
+
+            render();
+        };
+
+        window.addStage = () => {
+            allStages.push({ meta: { max_score: 0.7, min_steps: 20, max_steps: 100, aggType: 'geometric_mean' }, components: [] });
+            currentStageIndex = allStages.length - 1;
+            render();
+        };
+
+        window.switchStage = switchStage;
+
+        // ── Shared loader: parse a TOML string into editor state and render ──
+        function ingestTomlText(rawText) {
+            const rawData = toml.parse(rawText);  // throws on invalid TOML
+            const extracted = extractAllData(rawData);
+
+            allStages = extracted.stages;
+            globalParams = extracted.params;
+            learningStrategy = extracted.learning;
+            currentStageIndex = 0;
+
+            document.getElementById('priorFile').value = globalParams.prior_file || "";
+            document.getElementById('agentFile').value = globalParams.agent_file || "";
+            document.getElementById('smilesFile').value = globalParams.smiles_file || "";
+            document.getElementById('batchSize').value = globalParams.batch_size || 128;
+            document.getElementById('uniqueSeqs').checked = globalParams.unique_sequences !== false;
+            document.getElementById('randomizeSmiles').checked = globalParams.randomize_smiles !== false;
+            document.getElementById('sigma').value = learningStrategy.sigma || 128;
+            document.getElementById('learningRate').value = learningStrategy.rate || 0.0001;
+
+            document.getElementById('editorArea').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('uploadCard').style.display = 'none';
+            clearMsg('pasteError');
+            render();
+        }
+
+        function clearMsg(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+        function showPasteError(msg) {
+            const el = document.getElementById('pasteError');
+            if (el) { el.textContent = "Couldn't read that config: " + msg; el.style.display = 'block'; }
+        }
+
+        // The textarea is the live, editable representation. Copy/Export honour manual
+        // edits made in it (when the preview is open); otherwise fall back to state.
+        function currentTomlText() {
+            const out = document.getElementById('tomlOutput');
+            const box = document.getElementById('tomlPre');
+            if (out && out.style.display !== 'none' && box && box.value.trim()) return box.value;
+            return generateToml();
+        }
+
+        window.applyTomlEdits = () => {
+            const box = document.getElementById('tomlPre');
+            const errEl = document.getElementById('applyError');
+            try {
+                ingestTomlText(box.value);
+                box.value = generateToml();  // normalise formatting from rebuilt state
+                if (errEl) errEl.style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                if (errEl) { errEl.textContent = "Couldn't apply changes: " + err.message; errEl.style.display = 'block'; }
+            }
+        };
+
+        window.previewToml = () => {
+            document.getElementById('tomlPre').value = generateToml();
+            document.getElementById('tomlOutput').style.display = 'block';
+            clearMsg('applyError');
+        };
+        window.exportToml = () => {
+            const blob = new Blob([currentTomlText()], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'multi_stage_config.toml';
+            a.click();
+        };
+        window.copyToml = () => { navigator.clipboard.writeText(currentTomlText()); };
+
+        window.addEventListener('load', () => {
+            const compSelect = document.getElementById('newComponentSelect');
+            for (const [group, comps] of Object.entries(availableComponents)) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = group;
+                comps.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.dataset.params = JSON.stringify(c.params || {});
+                    opt.textContent = `${c.id} - ${c.name}`;
+                    optgroup.appendChild(opt);
+                });
+                compSelect.appendChild(optgroup);
+            }
+
+            const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
+            if (uploadZone) {
+                uploadZone.onclick = () => fileInput.click();
+                fileInput.onchange = () => {
+                    if (!fileInput.files[0]) return;
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        try {
+                            ingestTomlText(e.target.result);
+                        } catch (err) {
+                            console.error(err);
+                            showPasteError(err.message);
+                        }
+                    };
+                    reader.readAsText(fileInput.files[0]);
+                };
+            }
+
+            const loadPasteBtn = document.getElementById('loadPasteBtn');
+            if (loadPasteBtn) {
+                loadPasteBtn.onclick = () => {
+                    const text = document.getElementById('pasteInput').value.trim();
+                    if (!text) { showPasteError("Paste a TOML config first."); return; }
+                    try {
+                        ingestTomlText(text);
+                    } catch (err) {
+                        console.error(err);
+                        showPasteError(err.message);
+                    }
+                };
+            }
+        });
+    </script>
+</body>
+</html>

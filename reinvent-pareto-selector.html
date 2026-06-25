@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REINVENT Pareto Idea Selector</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/smiles-drawer@2.1.7/dist/smiles-drawer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+    --bg:#faf9f5; --surface:#fffefb; --surface2:#f0eee6; --text:#141413; --text2:#5c5b54;
+    --text3:#b0aea5; --border:#ddd8cc; --accent:#d97757; --accent-bg:#f7ebe4;
+    --danger:#b3492d; --success:#5f7344; --mono:'JetBrains Mono',monospace; --sans:'DM Sans',system-ui,sans-serif;
+    /* distance-bin ramp: closest(red) -> furthest(green), per paper Fig 6 */
+    --bin1:#b3492d; --bin2:#d97757; --bin3:#c98a3c; --bin4:#8a9a55; --bin5:#5f7344;
+    --bs-body-bg:#faf9f5; --bs-body-color:#141413; --bs-secondary-color:#5c5b54;
+    --bs-light-rgb:240,238,230; --bs-dark-rgb:20,20,19; --bs-danger-rgb:179,73,45;
+    --bs-success-rgb:95,115,68; --bs-border-color:#ddd8cc; --bs-primary:#d97757; --bs-primary-rgb:217,119,87;
+    --bs-link-color:#c4633f; --bs-link-hover-color:#b35636;
+}
+@media (prefers-color-scheme:dark){
+    :root{ --bg:#141413; --surface:#1e1d1b; --surface2:#2a2825; --text:#faf9f5; --text2:#b0aea5;
+        --text3:#7c7a70; --border:#3a382f; --accent:#e08a6b; --accent-bg:#3a2a22;
+        --bs-body-bg:#141413; --bs-body-color:#faf9f5; --bs-dark-rgb:20,20,19; }
+}
+.btn-primary{--bs-btn-bg:var(--accent);--bs-btn-border-color:var(--accent);--bs-btn-hover-bg:#c4633f;--bs-btn-hover-border-color:#c4633f;--bs-btn-active-bg:#b35636;--bs-btn-active-border-color:#b35636;--bs-btn-disabled-bg:var(--accent);--bs-btn-disabled-border-color:var(--accent);--bs-btn-color:#fff;--bs-btn-hover-color:#fff;--bs-btn-active-color:#fff;--bs-btn-disabled-color:#fff;}
+.btn-outline-primary{--bs-btn-color:#c4633f;--bs-btn-border-color:var(--accent);--bs-btn-hover-bg:var(--accent);--bs-btn-hover-border-color:var(--accent);--bs-btn-hover-color:#fff;--bs-btn-active-bg:var(--accent);--bs-btn-active-border-color:var(--accent);--bs-btn-active-color:#fff;}
+.btn-outline-secondary{--bs-btn-color:var(--text2);--bs-btn-border-color:var(--border);--bs-btn-hover-bg:var(--surface2);--bs-btn-hover-color:var(--text);--bs-btn-hover-border-color:var(--border);--bs-btn-active-bg:var(--surface2);--bs-btn-active-color:var(--text);}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.5;}
+.container{max-width:1180px;margin-top:2rem;margin-bottom:4rem;}
+h1,h2,h3,h4{color:var(--text);}
+.lead-sub{color:var(--text2);font-size:.95rem;}
+.card{border:1px solid var(--border);border-radius:14px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.card-body{padding:1.5rem;}
+.step-eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:500;}
+.upload-zone{border:2px dashed var(--border);border-radius:14px;padding:44px 24px;text-align:center;cursor:pointer;transition:.2s;background:var(--surface);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-bg);}
+.upload-zone input{display:none;}
+.upload-zone .icon{font-size:30px;opacity:.4;margin-bottom:10px;}
+table.obj-table{width:100%;border-collapse:collapse;}
+table.obj-table th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);font-weight:500;text-align:left;padding:.4rem .6rem;border-bottom:1px solid var(--border);}
+table.obj-table td{padding:.4rem .6rem;border-bottom:1px solid var(--surface2);vertical-align:middle;}
+table.obj-table tr.off{opacity:.45;}
+.colname{font-family:var(--mono);font-size:.82rem;}
+.wnum{width:84px;}
+.dirsel{width:118px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;}
+.stat{background:var(--surface2);border-radius:10px;padding:.8rem 1rem;}
+.stat .v{font-size:1.4rem;font-weight:700;font-family:var(--mono);}
+.stat .l{font-size:.72rem;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;}
+.bin-legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--text2);align-items:center;}
+.bin-dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+#pcSvg{width:100%;height:420px;}
+#pcSvg .axisline{stroke:var(--border);stroke-width:1.5;}
+#pcSvg .axislabel{fill:var(--text2);font-size:11px;font-family:var(--sans);}
+#pcSvg .tick{fill:var(--text3);font-size:9px;font-family:var(--mono);}
+#pcSvg polyline{fill:none;stroke-width:1.4;opacity:.55;cursor:pointer;}
+#pcSvg polyline.sel{stroke-width:3;opacity:1;}
+.struct-card{border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:.5rem;text-align:center;}
+.struct-card canvas{width:150px;height:110px;}
+.struct-card .smi{font-family:var(--mono);font-size:.62rem;color:var(--text2);word-break:break-all;line-height:1.2;}
+.struct-card .tag{font-family:var(--mono);font-size:.68rem;color:var(--accent);}
+.sel-table{font-size:.8rem;}
+.sel-table th{font-size:.68rem;text-transform:uppercase;color:var(--text3);letter-spacing:.04em;}
+.sel-table td,.sel-table th{padding:.35rem .5rem;border-bottom:1px solid var(--surface2);}
+.mono{font-family:var(--mono);}
+.muted{color:var(--text2);}
+.note{font-size:.82rem;color:var(--text2);background:var(--surface2);border-left:3px solid var(--accent);padding:.6rem .85rem;border-radius:6px;}
+.pair-pick select{font-family:var(--mono);font-size:.82rem;}
+.hide{display:none;}
+canvas#scatter{max-height:440px;}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="mb-4">
+        <h1 class="fw-bold mb-1">REINVENT Pareto Idea Selector</h1>
+        <div class="lead-sub">Upload a REINVENT run CSV, compile the weighted multi-objective scoring function, then surface and select the Pareto-optimal designs &mdash; with the ideal-point knee from Landolfi et&nbsp;al.</div>
+    </div>
+
+    <!-- STEP 1: UPLOAD -->
+    <div class="card mb-4" id="uploadCard">
+        <div class="card-body">
+            <div class="step-eyebrow mb-2">Step 1 &middot; Data</div>
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
+                <div class="icon">&#128202;</div>
+                <div class="fw-medium">Drop a REINVENT CSV here or click to browse</div>
+                <div class="muted" style="font-size:.85rem;">Expects a header row with SMILES and per-component score columns</div>
+            </div>
+            <div id="loadError" class="text-danger small mt-2 hide"></div>
+        </div>
+    </div>
+
+    <!-- STEP 2: SCORING FUNCTION -->
+    <div class="card mb-4 hide" id="scoreCard">
+        <div class="card-body">
+            <div class="step-eyebrow mb-2">Step 2 &middot; Compile the scoring function</div>
+            <div class="d-flex flex-wrap gap-3 align-items-end mb-3">
+                <div>
+                    <label class="form-label small muted mb-1">SMILES column</label>
+                    <select class="form-select form-select-sm" id="smilesSelect" style="min-width:160px;"></select>
+                </div>
+                <div class="ms-auto small muted" id="dataMeta"></div>
+            </div>
+            <table class="obj-table mb-3" id="objTable">
+                <thead><tr><th style="width:42px;">Use</th><th>Component column</th><th>Objective direction</th><th>Weight (w<sub>i</sub>)</th><th>Range in data</th></tr></thead>
+                <tbody id="objBody"></tbody>
+            </table>
+            <div class="note mb-3">
+                <strong>Total Score</strong> is the weighted mean &nbsp;<span class="mono">s(x) = &Sigma;w&middot;s<sub>i</sub> / &Sigma;w</span>&nbsp; (eq 1), computed from your components <em>as given</em> &mdash; REINVENT's convention is that each component is already a transformed score in [0,1] where higher is better.
+                The <strong>direction</strong> toggles affect only the Pareto dominance test (maximize objectives are sign-inverted internally, exactly as the notebook prescribes).
+            </div>
+            <div class="d-flex flex-wrap gap-3 align-items-end">
+                <div>
+                    <label class="form-label small muted mb-1">Deduplicate by SMILES (keep best Total Score)</label><br>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="dedupe" checked></div>
+                </div>
+                <div>
+                    <label class="form-label small muted mb-1">Analyze top N rows by Total Score</label>
+                    <input type="number" class="form-control form-control-sm" id="topN" value="2000" min="10" style="width:120px;">
+                    <div class="muted" style="font-size:.72rem;">Pareto test is O(N&sup2;); ranking first keeps it fast.</div>
+                </div>
+                <div class="ms-auto">
+                    <button class="btn btn-primary fw-bold" id="computeBtn">Compute scores &amp; Pareto front</button>
+                </div>
+            </div>
+            <div id="objError" class="text-danger small mt-2 hide"></div>
+        </div>
+    </div>
+
+    <!-- STEP 3: RESULTS -->
+    <div class="card mb-4 hide" id="resultsCard">
+        <div class="card-body">
+            <div class="step-eyebrow mb-2">Step 3 &middot; Pareto front &amp; selection</div>
+            <div class="stat-grid mb-3" id="statGrid"></div>
+
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button class="btn btn-sm btn-outline-primary" id="selPareto">Select all Pareto</button>
+                <button class="btn btn-sm btn-outline-primary" id="selKnee">Select knee point</button>
+                <div class="input-group input-group-sm" style="width:auto;">
+                    <span class="input-group-text">Top</span>
+                    <input type="number" id="topNearest" class="form-control" value="5" min="1" style="width:64px;">
+                    <button class="btn btn-outline-primary" id="selNearest">nearest ideal</button>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" id="selClear">Clear</button>
+                <div class="pair-pick d-flex align-items-center gap-1 ms-auto hide" id="pairPick">
+                    <span class="small muted">2D projection:</span>
+                    <select class="form-select form-select-sm" id="pairX"></select>
+                    <span class="small muted">vs</span>
+                    <select class="form-select form-select-sm" id="pairY"></select>
+                </div>
+            </div>
+
+            <div id="scatterWrap"><canvas id="scatter"></canvas></div>
+            <div id="pcWrap" class="hide">
+                <div class="bin-legend mb-2" id="binLegend"></div>
+                <svg id="pcSvg" viewBox="0 0 1000 420" preserveAspectRatio="xMidYMid meet"></svg>
+                <div class="muted" style="font-size:.78rem;">Each line is one Pareto-optimal molecule across the normalized objectives (top = best). Colour = distance bin to the ideal point. Click a line to select it; the bold line is the knee point. The 2D projection above plots any objective pair.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STEP 4: SELECTED -->
+    <div class="card mb-4 hide" id="selCard">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="step-eyebrow">Step 4 &middot; Selected ideas (<span id="selCount">0</span>)</div>
+                <button class="btn btn-sm btn-outline-secondary" id="exportSel">Export selection CSV</button>
+            </div>
+            <div class="row g-2 mb-3" id="structGrid"></div>
+            <div class="table-responsive">
+                <table class="sel-table w-100" id="selTable"><thead></thead><tbody></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ===================== State =====================
+const S = {
+    rows: [], columns: [], numericCols: [], smilesCol: null,
+    objectives: [], // {key, use, dir, weight}
+    analyzed: [],   // rows used in analysis (deduped/topN), each: {...orig, _i, _total, _pareto, _dist, _bin, _knee}
+    paretoIdx: [], kneeI: -1, selection: new Set(), chart: null
+};
+const BIN_COLORS = ['--bin1','--bin2','--bin3','--bin4','--bin5'].map(v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// ===================== Verified algorithm core =====================
+function activeObjs(){ return S.objectives.filter(o=>o.use); }
+
+function dominates(a, b, objs){ // does a dominate b?
+    let better = false;
+    for(const o of objs){
+        const av=a[o.key], bv=b[o.key];
+        if(o.dir==='max'){ if(av<bv) return false; if(av>bv) better=true; }
+        else            { if(av>bv) return false; if(av<bv) better=true; }
+    }
+    return better;
+}
+function paretoFront(rows, objs){
+    const idx=[];
+    for(let i=0;i<rows.length;i++){
+        let dominated=false;
+        for(let j=0;j<rows.length;j++){
+            if(i===j) continue;
+            if(dominates(rows[j], rows[i], objs)){ dominated=true; break; }
+        }
+        if(!dominated) idx.push(i);
+    }
+    return idx;
+}
+// normalized, direction-aware so that 1 = best on every objective
+function normalizedMatrix(rows, objs){
+    const mn={}, mx={};
+    for(const o of objs){ const v=rows.map(r=>r[o.key]); mn[o.key]=Math.min(...v); mx[o.key]=Math.max(...v); }
+    return rows.map(r=>{
+        const n={};
+        for(const o of objs){ const span=(mx[o.key]-mn[o.key])||1; let x=(r[o.key]-mn[o.key])/span; if(o.dir==='min') x=1-x; n[o.key]=x; }
+        return n;
+    });
+}
+function distanceToIdeal(normRow, objs){ // ideal = 1 on every (direction-corrected) objective  -> eq 4
+    let s=0; for(const o of objs){ const d=1-normRow[o.key]; s+=d*d; } return Math.sqrt(s);
+}
+function weightedTotal(row, objs){
+    let num=0, den=0;
+    for(const o of objs){ const w=Number(o.weight)||0; num+=w*Number(row[o.key]); den+=w; }
+    return den>0 ? num/den : NaN;
+}
+// 2D normalized hypervolume (maximize space, reference = origin), per notebook sweep
+function hypervolume2D(normPts){ // [{x,y}] both higher-better in [0,1]
+    if(normPts.length===0) return 0;
+    const pts=[...normPts].sort((a,b)=>b.x-a.x); // descending x
+    let hv=0, prevY=0;
+    for(const p of pts){ if(p.y>prevY){ hv += p.x*(p.y-prevY); prevY=p.y; } }
+    return hv;
+}
+
+// ===================== CSV ingest =====================
+function isNumericCol(rows, col){
+    let n=0,ok=0;
+    for(const r of rows){ const v=r[col]; if(v===''||v==null) continue; n++; if(!isNaN(parseFloat(v))&&isFinite(v)) ok++; if(n>=50) break; }
+    return n>0 && ok/n>0.8;
+}
+function ingest(text){
+    const parsed = Papa.parse(text.trim(), {header:true, dynamicTyping:false, skipEmptyLines:true});
+    if(!parsed.data.length) throw new Error('No data rows found.');
+    S.columns = parsed.meta.fields.filter(Boolean);
+    // coerce numerics
+    S.rows = parsed.data.map(r=>{ const o={}; for(const c of S.columns) o[c]=r[c]; return o; });
+    S.numericCols = S.columns.filter(c=>isNumericCol(S.rows, c));
+    for(const r of S.rows) for(const c of S.numericCols){ r[c]=parseFloat(r[c]); }
+    // guess SMILES column
+    const guess = S.columns.find(c=>/^smiles$/i.test(c)) || S.columns.find(c=>/smiles/i.test(c)) || S.columns.find(c=>!S.numericCols.includes(c)) || null;
+    S.smilesCol = guess;
+    buildScoringUI();
+}
+
+// ===================== Step 2 UI =====================
+function defaultDir(col){ // sensible default directions
+    if(/sa[_ ]?score|synth|sascore/i.test(col)) return 'min';
+    if(/docking|vina|energy|affinity/i.test(col)) return 'min';
+    return 'max';
+}
+function defaultUse(col){
+    return /score|activity|docking|vina|qed|sa|fxr|gpbar|ror|affinity|pred/i.test(col)
+        && !/^(step|epoch|index|idx)$/i.test(col);
+}
+function colRange(col){
+    const v=S.rows.map(r=>r[col]).filter(x=>isFinite(x));
+    if(!v.length) return '—';
+    return Math.min(...v).toFixed(3)+' … '+Math.max(...v).toFixed(3);
+}
+function buildScoringUI(){
+    const sm=document.getElementById('smilesSelect'); sm.innerHTML='';
+    for(const c of S.columns){ const o=document.createElement('option'); o.value=c; o.textContent=c; if(c===S.smilesCol)o.selected=true; sm.appendChild(o); }
+    sm.onchange=()=>{ S.smilesCol=sm.value; };
+
+    S.objectives = S.numericCols.map(c=>({key:c, use:defaultUse(c), dir:defaultDir(c), weight:1}));
+    const body=document.getElementById('objBody'); body.innerHTML='';
+    S.objectives.forEach((o,i)=>{
+        const tr=document.createElement('tr'); tr.className=o.use?'':'off';
+        tr.innerHTML=`
+            <td><input class="form-check-input" type="checkbox" ${o.use?'checked':''} data-i="${i}" data-k="use"></td>
+            <td class="colname">${o.key}</td>
+            <td><select class="form-select form-select-sm dirsel" data-i="${i}" data-k="dir">
+                <option value="max" ${o.dir==='max'?'selected':''}>Maximize ↑</option>
+                <option value="min" ${o.dir==='min'?'selected':''}>Minimize ↓</option></select></td>
+            <td><input type="number" class="form-control form-control-sm wnum" value="${o.weight}" min="0" step="1" data-i="${i}" data-k="weight"></td>
+            <td class="mono muted" style="font-size:.78rem;">${colRange(o.key)}</td>`;
+        body.appendChild(tr);
+    });
+    body.querySelectorAll('input,select').forEach(el=>{
+        el.onchange=()=>{
+            const i=+el.dataset.i, k=el.dataset.k;
+            if(k==='use'){ S.objectives[i].use=el.checked; el.closest('tr').className=el.checked?'':'off'; }
+            else if(k==='weight'){ S.objectives[i].weight=el.value; }
+            else { S.objectives[i][k]=el.value; }
+        };
+    });
+    document.getElementById('dataMeta').textContent =
+        `${S.rows.length.toLocaleString()} rows · ${S.columns.length} columns · ${S.numericCols.length} numeric`;
+    document.getElementById('scoreCard').classList.remove('hide');
+}
+
+// ===================== Step 3: compute =====================
+function compute(){
+    const objs=activeObjs();
+    const err=document.getElementById('objError');
+    if(objs.length<2){ err.textContent='Select at least two component columns as objectives.'; err.classList.remove('hide'); return; }
+    if(objs.reduce((s,o)=>s+(Number(o.weight)||0),0)<=0){ err.textContent='Total weight must be greater than zero.'; err.classList.remove('hide'); return; }
+    err.classList.add('hide');
+
+    // total score on all rows
+    let rows = S.rows.map((r,i)=>({...r, _orig:i, _total:weightedTotal(r,objs)})).filter(r=>isFinite(r._total));
+
+    // dedupe by SMILES keeping best total
+    if(document.getElementById('dedupe').checked && S.smilesCol){
+        const best=new Map();
+        for(const r of rows){ const k=r[S.smilesCol]; if(!best.has(k)||r._total>best.get(k)._total) best.set(k,r); }
+        rows=[...best.values()];
+    }
+    // rank by total, take top N for the Pareto test
+    const topN=Math.max(10, parseInt(document.getElementById('topN').value)||2000);
+    rows.sort((a,b)=>b._total-a._total);
+    const analyzed = rows.slice(0, topN).map((r,i)=>({...r, _i:i}));
+
+    // pareto + knee
+    const pIdx = paretoFront(analyzed, objs);
+    const norm = normalizedMatrix(analyzed, objs);
+    analyzed.forEach((r,i)=>{ r._pareto=false; r._dist=distanceToIdeal(norm[i],objs); });
+    pIdx.forEach(i=>analyzed[i]._pareto=true);
+
+    // distance bins (5) over Pareto distances, closest->furthest
+    const pd = pIdx.map(i=>analyzed[i]._dist);
+    const dmin=Math.min(...pd), dmax=Math.max(...pd), span=(dmax-dmin)||1;
+    pIdx.forEach(i=>{ let b=Math.floor((analyzed[i]._dist-dmin)/span*5); if(b>4)b=4; analyzed[i]._bin=b; });
+
+    // knee = pareto point minimizing distance to ideal (eq 4)
+    let knee=-1, kd=Infinity;
+    pIdx.forEach(i=>{ if(analyzed[i]._dist<kd){kd=analyzed[i]._dist; knee=i;} });
+    analyzed.forEach(r=>r._knee=false);
+    if(knee>=0) analyzed[knee]._knee=true;
+
+    S.analyzed=analyzed; S.paretoIdx=pIdx; S.kneeI=knee; S.normCache=norm; S.selection=new Set();
+    renderResults();
+}
+
+function renderResults(){
+    const objs=activeObjs();
+    document.getElementById('resultsCard').classList.remove('hide');
+
+    // stats
+    const stat=(v,l)=>`<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+    let hv='—';
+    if(objs.length===2){
+        const nmap=Object.fromEntries(S.analyzed.map((r,i)=>[i,S.normCache[i]]));
+        const pts=S.paretoIdx.map(i=>({x:nmap[i][objs[0].key], y:nmap[i][objs[1].key]}));
+        hv=hypervolume2D(pts).toFixed(3);
+    }
+    const knee=S.kneeI>=0?S.analyzed[S.kneeI]:null;
+    document.getElementById('statGrid').innerHTML =
+        stat(S.analyzed.length.toLocaleString(),'Analyzed') +
+        stat(S.paretoIdx.length,'Pareto-optimal') +
+        stat(objs.length,'Objectives') +
+        stat(hv, objs.length===2?'Norm. hypervolume':'HV (2-obj only)') +
+        (knee?stat(knee._total.toFixed(3),'Knee Total Score'):'');
+
+    // build pair selectors
+    const px=document.getElementById('pairX'), py=document.getElementById('pairY');
+    [px,py].forEach((sel,si)=>{ sel.innerHTML=''; objs.forEach((o,oi)=>{ const op=document.createElement('option'); op.value=o.key; op.textContent=o.key; if(oi===si)op.selected=true; sel.appendChild(op); }); sel.onchange=drawScatter; });
+
+    if(objs.length===2){
+        document.getElementById('pairPick').classList.add('hide');
+        document.getElementById('pcWrap').classList.add('hide');
+        document.getElementById('scatterWrap').classList.remove('hide');
+    } else {
+        document.getElementById('pairPick').classList.remove('hide');
+        document.getElementById('pcWrap').classList.remove('hide');
+        document.getElementById('scatterWrap').classList.remove('hide');
+        drawParallel();
+    }
+    drawScatter();
+    renderSelection();
+    document.getElementById('selCard').classList.remove('hide');
+}
+
+// ---- 2D / pair scatter ----
+function drawScatter(){
+    const objs=activeObjs();
+    const xKey = objs.length===2 ? objs[0].key : document.getElementById('pairX').value;
+    const yKey = objs.length===2 ? objs[1].key : document.getElementById('pairY').value;
+    const xDir = (objs.find(o=>o.key===xKey)||{}).dir, yDir=(objs.find(o=>o.key===yKey)||{}).dir;
+
+    const nonPareto=[], pareto=[], selPts=[], kneePt=[];
+    S.analyzed.forEach((r,i)=>{
+        const p={x:r[xKey], y:r[yKey], _i:i};
+        if(S.selection.has(i)) selPts.push(p);
+        if(r._knee) kneePt.push(p);
+        if(r._pareto) pareto.push(p); else nonPareto.push(p);
+    });
+    const ds=[
+        {label:'Other', data:nonPareto, backgroundColor:'rgba(176,174,165,.35)', pointRadius:2.5},
+        {label:'Pareto front', data:pareto, backgroundColor:cssv('--accent'), pointRadius:4.5},
+        {label:'Selected', data:selPts, backgroundColor:'transparent', borderColor:cssv('--text'), borderWidth:2, pointRadius:7, pointStyle:'circle'},
+        {label:'Knee', data:kneePt, backgroundColor:cssv('--bin1'), pointStyle:'star', pointRadius:11, borderColor:cssv('--text'), borderWidth:1}
+    ];
+    if(S.chart) S.chart.destroy();
+    S.chart=new Chart(document.getElementById('scatter'),{
+        type:'scatter',
+        data:{datasets:ds},
+        options:{
+            responsive:true, animation:false,
+            onClick:(e,els)=>{ if(els.length){ const d=els[0]; const pt=ds[d.datasetIndex].data[d.index]; if(pt&&pt._i!=null) toggleSel(pt._i); } },
+            scales:{
+                x:{title:{display:true,text:xKey+(xDir==='min'?' (min ↓)':' (max ↑)'),color:cssv('--text2')},grid:{color:cssv('--surface2')},ticks:{color:cssv('--text2')}},
+                y:{title:{display:true,text:yKey+(yDir==='min'?' (min ↓)':' (max ↑)'),color:cssv('--text2')},grid:{color:cssv('--surface2')},ticks:{color:cssv('--text2')}}
+            },
+            plugins:{
+                legend:{labels:{color:cssv('--text2'),usePointStyle:true}},
+                tooltip:{callbacks:{label:(c)=>{ const r=S.analyzed[c.raw._i]; const parts=[`${xKey}: ${c.raw.x}`,`${yKey}: ${c.raw.y}`,`Total: ${r._total.toFixed(3)}`,`dist→ideal: ${r._dist.toFixed(3)}`]; if(S.smilesCol) parts.unshift(String(r[S.smilesCol]).slice(0,40)); return parts; }}}
+            }
+        }
+    });
+}
+
+// ---- parallel coordinates (>=3 objectives) ----
+function drawParallel(){
+    const objs=activeObjs();
+    const svg=document.getElementById('pcSvg'); svg.innerHTML='';
+    const W=1000,H=420,padL=60,padR=40,padT=24,padB=70;
+    const n=objs.length, plotW=W-padL-padR, plotH=H-padT-padB;
+    const xAt=k=> padL + (n===1?0:k*plotW/(n-1));
+    const yAt=v=> padT + (1-v)*plotH; // v in [0,1], top=best
+
+    const NS='http://www.w3.org/2000/svg';
+    // axes
+    objs.forEach((o,k)=>{
+        const x=xAt(k);
+        const ax=document.createElementNS(NS,'line'); ax.setAttribute('x1',x);ax.setAttribute('x2',x);ax.setAttribute('y1',padT);ax.setAttribute('y2',padT+plotH); ax.setAttribute('class','axisline'); svg.appendChild(ax);
+        [0,0.5,1].forEach(t=>{ const tk=document.createElementNS(NS,'text'); tk.setAttribute('x',x-6);tk.setAttribute('y',yAt(t)+3);tk.setAttribute('text-anchor','end');tk.setAttribute('class','tick'); tk.textContent=t.toFixed(1); svg.appendChild(tk); });
+        const lb=document.createElementNS(NS,'text'); lb.setAttribute('x',x);lb.setAttribute('y',padT+plotH+22);lb.setAttribute('text-anchor','middle');lb.setAttribute('class','axislabel');
+        lb.textContent=o.key.length>14?o.key.slice(0,13)+'…':o.key; svg.appendChild(lb);
+        const dir=document.createElementNS(NS,'text'); dir.setAttribute('x',x);dir.setAttribute('y',padT+plotH+36);dir.setAttribute('text-anchor','middle');dir.setAttribute('class','tick');
+        dir.textContent=o.dir==='max'?'max ↑':'min ↓'; svg.appendChild(dir);
+    });
+    // lines for pareto points (normalized, dir-aware = S.normCache)
+    const order=[...S.paretoIdx].sort((a,b)=>S.analyzed[b]._dist-S.analyzed[a]._dist); // far first, near (knee) drawn last/on top
+    order.forEach(i=>{
+        const pts=objs.map((o,k)=>`${xAt(k)},${yAt(S.normCache[i][o.key])}`).join(' ');
+        const pl=document.createElementNS(NS,'polyline'); pl.setAttribute('points',pts);
+        pl.setAttribute('stroke', BIN_COLORS[S.analyzed[i]._bin]||cssv('--accent'));
+        if(S.analyzed[i]._knee) pl.classList.add('sel');
+        if(S.selection.has(i)) pl.classList.add('sel');
+        pl.addEventListener('click',()=>toggleSel(i));
+        pl.appendChild(document.createElementNS(NS,'title')).textContent =
+            (S.smilesCol?String(S.analyzed[i][S.smilesCol])+' · ':'')+'Total '+S.analyzed[i]._total.toFixed(3)+' · dist '+S.analyzed[i]._dist.toFixed(3)+(S.analyzed[i]._knee?' · KNEE':'');
+        svg.appendChild(pl);
+    });
+    // legend
+    const leg=document.getElementById('binLegend');
+    leg.innerHTML='<span class="muted">Distance to ideal:</span>'+
+        BIN_COLORS.map((c,k)=>`<span><span class="bin-dot" style="background:${c}"></span>${k===0?'closest':k===4?'furthest':'bin '+(k+1)}</span>`).join('');
+}
+
+// ===================== Selection =====================
+function toggleSel(i){ if(S.selection.has(i)) S.selection.delete(i); else S.selection.add(i); afterSelChange(); }
+function afterSelChange(){ drawScatter(); if(activeObjs().length>=3) drawParallel(); renderSelection(); }
+function renderSelection(){
+    const objs=activeObjs();
+    document.getElementById('selCount').textContent=S.selection.size;
+    const idxs=[...S.selection].sort((a,b)=>S.analyzed[a]._dist-S.analyzed[b]._dist);
+    // table
+    const thead=document.querySelector('#selTable thead'), tb=document.querySelector('#selTable tbody');
+    thead.innerHTML='<tr><th>#</th>'+(S.smilesCol?'<th>SMILES</th>':'')+objs.map(o=>`<th>${o.key}</th>`).join('')+'<th>Total</th><th>dist→ideal</th><th>flags</th><th></th></tr>';
+    tb.innerHTML='';
+    idxs.forEach(i=>{
+        const r=S.analyzed[i];
+        const flags=(r._knee?'<span class="mono" style="color:var(--bin1)">knee</span> ':'')+(r._pareto?'<span class="mono" style="color:var(--accent)">pareto</span>':'');
+        tb.innerHTML+=`<tr><td class="mono">${i}</td>`+(S.smilesCol?`<td class="mono" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r[S.smilesCol]}</td>`:'')+
+            objs.map(o=>`<td class="mono">${Number(r[o.key]).toFixed(3)}</td>`).join('')+
+            `<td class="mono">${r._total.toFixed(3)}</td><td class="mono">${r._dist.toFixed(3)}</td><td>${flags}</td>`+
+            `<td><button class="btn btn-sm btn-outline-secondary py-0 px-1" data-rm="${i}">&times;</button></td></tr>`;
+    });
+    tb.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>toggleSel(+b.dataset.rm));
+    // structures
+    const grid=document.getElementById('structGrid'); grid.innerHTML='';
+    if(S.smilesCol){
+        idxs.forEach(i=>{
+            const r=S.analyzed[i];
+            const col=document.createElement('div'); col.className='col-6 col-sm-4 col-md-3 col-lg-2';
+            col.innerHTML=`<div class="struct-card"><div class="tag">#${i}${r._knee?' ★':''}</div><canvas id="cv${i}" width="150" height="110"></canvas><div class="smi">${String(r[S.smilesCol]).slice(0,48)}</div></div>`;
+            grid.appendChild(col);
+            renderStructure(r[S.smilesCol], 'cv'+i);
+        });
+    }
+}
+function renderStructure(smiles, canvasId){
+    const cv=document.getElementById(canvasId); if(!cv) return;
+    const theme = matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+    try{
+        if(typeof SmiDrawer!=='undefined'){ const d=new SmiDrawer({width:150,height:110}); d.draw(smiles, '#'+canvasId, theme); return; }
+        if(typeof SmilesDrawer!=='undefined'){ const d=new SmilesDrawer.Drawer({width:150,height:110});
+            SmilesDrawer.parse(smiles, t=>d.draw(t,cv,theme), ()=>fallbackSmi(cv,smiles)); return; }
+        fallbackSmi(cv,smiles);
+    }catch(e){ fallbackSmi(cv,smiles); }
+}
+function fallbackSmi(cv,smiles){ const ctx=cv.getContext('2d'); ctx.clearRect(0,0,cv.width,cv.height); ctx.fillStyle=cssv('--text3'); ctx.font='9px monospace'; ctx.fillText('(structure n/a)',8,20); }
+
+// ===================== Buttons =====================
+document.getElementById('selPareto').onclick=()=>{ S.paretoIdx.forEach(i=>S.selection.add(i)); afterSelChange(); };
+document.getElementById('selKnee').onclick=()=>{ if(S.kneeI>=0){S.selection.add(S.kneeI); afterSelChange();} };
+document.getElementById('selClear').onclick=()=>{ S.selection.clear(); afterSelChange(); };
+document.getElementById('selNearest').onclick=()=>{
+    const n=Math.max(1,parseInt(document.getElementById('topNearest').value)||5);
+    [...S.paretoIdx].sort((a,b)=>S.analyzed[a]._dist-S.analyzed[b]._dist).slice(0,n).forEach(i=>S.selection.add(i));
+    afterSelChange();
+};
+document.getElementById('exportSel').onclick=()=>{
+    const objs=activeObjs();
+    const cols=['index'].concat(S.smilesCol?[S.smilesCol]:[]).concat(objs.map(o=>o.key)).concat(['Total_Score','dist_to_ideal','is_pareto','is_knee']);
+    const lines=[cols.join(',')];
+    [...S.selection].sort((a,b)=>S.analyzed[a]._dist-S.analyzed[b]._dist).forEach(i=>{
+        const r=S.analyzed[i];
+        const vals=[i].concat(S.smilesCol?['"'+String(r[S.smilesCol]).replace(/"/g,'""')+'"']:[]).concat(objs.map(o=>r[o.key])).concat([r._total,r._dist,r._pareto,r._knee]);
+        lines.push(vals.join(','));
+    });
+    const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='selected_ideas.csv'; a.click();
+};
+document.getElementById('computeBtn').onclick=compute;
+
+// ===================== Upload wiring =====================
+const uz=document.getElementById('uploadZone'), fi=document.getElementById('fileInput');
+uz.onclick=()=>fi.click();
+uz.ondragover=e=>{e.preventDefault();uz.classList.add('drag');};
+uz.ondragleave=()=>uz.classList.remove('drag');
+uz.ondrop=e=>{e.preventDefault();uz.classList.remove('drag'); if(e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);};
+fi.onchange=()=>{ if(fi.files[0]) readFile(fi.files[0]); };
+function readFile(file){
+    const err=document.getElementById('loadError'); err.classList.add('hide');
+    const reader=new FileReader();
+    reader.onload=e=>{ try{ ingest(e.target.result); }catch(ex){ err.textContent='Could not read that CSV: '+ex.message; err.classList.remove('hide'); } };
+    reader.readAsText(file);
+}
+</script>
+</body>
+</html>
