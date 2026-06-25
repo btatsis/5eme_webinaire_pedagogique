@@ -109,7 +109,7 @@ A visual interface to setup the input file (.yaml) for the REINVENT run can be f
 
 ## Analysing the results from the REINVENT run
 
-![NLL loss curve](figures/NLL_plot.png)
+![NLL loss curve](figs/NLL_plot.png)
 *Figure 1: NLL training curve for the REINVENT4 prior model.*
 
 A web app that can help us select compounds based on a multiobjective optimisation approach (please see article https://doi.org/10.1021/acs.jcim.6c00421)

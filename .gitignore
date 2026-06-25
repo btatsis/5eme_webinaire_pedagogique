@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb~
+
+# Conda / virtual environments
+env/
+venv/
+.env/
+*.egg
+
+# REINVENT run outputs
+results/
+logs/
+*.log
+*.csv
+*.sdf
+*.mol2
+checkpoints/
+staged_learning/
+
+# Large model/data files
+*.ckpt
+*.pt
+*.pth
+*.pkl
+*.npz
+*.npy
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
