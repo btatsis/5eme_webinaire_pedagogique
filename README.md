@@ -1,6 +1,6 @@
 # Open-Source Generative AI Tools in Chemistry
 
-This README accompanies the **5th Pedagogical Webinar** and guides participants through the installation and setup of:
+This README accompanies the **5th Pedagogical Webinar** and guides participants through the installation, setup, and execution of:
 
 - **REINVENT4** — an open-source AI-driven generative molecule design framework
 - **FLOWR.ROOT** — a flow-matching foundation model for structure-aware 3D ligand generation and affinity prediction
